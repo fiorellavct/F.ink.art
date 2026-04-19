@@ -65,6 +65,58 @@
     }
     .lang-btn button.active { background:var(--offwhite); color:var(--black); opacity:1; }
 
+    /* HAMBURGER BUTTON */
+    .hamburger {
+      display:none;
+      flex-direction:column;
+      justify-content:center;
+      gap:5px;
+      background:none;
+      border:none;
+      cursor:pointer;
+      padding:4px;
+      margin-left:1rem;
+    }
+    .hamburger span {
+      display:block;
+      width:22px;
+      height:1px;
+      background:var(--offwhite);
+      transition:all 0.3s ease;
+    }
+    .hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(4px,4px); }
+    .hamburger.open span:nth-child(2) { opacity:0; }
+    .hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(4px,-4px); }
+
+    /* MOBILE MENU OVERLAY */
+    .mobile-menu {
+      display:none;
+      position:fixed;
+      top:0; left:0; right:0; bottom:0;
+      background:rgba(8,8,8,0.97);
+      z-index:300;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:2.5rem;
+    }
+    .mobile-menu.open { display:flex; }
+    .mobile-menu a {
+      color:var(--offwhite);
+      text-decoration:none;
+      font-family:'Cormorant Garamond',serif;
+      font-size:2rem;
+      font-weight:300;
+      letter-spacing:0.25em;
+      text-transform:uppercase;
+      opacity:0.85;
+      transition:opacity 0.2s;
+    }
+    .mobile-menu a:hover { opacity:1; }
+    .mobile-menu .lang-btn {
+      margin-top:1rem;
+    }
+
     /* HERO tipográfico */
     #home {
       position:relative; z-index:1;
@@ -314,6 +366,7 @@
     @media(max-width:900px){
       nav{ padding:1rem 1.5rem; }
       .nav-links{ display:none; }
+      .hamburger{ display:flex; }
       .section{ padding:5rem 1.5rem; }
       .about-grid,.focus-grid,.booking-grid{ grid-template-columns:1fr; gap:3rem; }
       .about-img img, .focus-img img {
@@ -370,8 +423,24 @@
       <button onclick="setLang('es')" id="btn-es" class="active">ES</button>
       <button onclick="setLang('en')" id="btn-en">EN</button>
     </div>
+    <button class="hamburger" id="hamburger" aria-label="Menú" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
+
+<!-- MOBILE MENU OVERLAY -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#sobre" onclick="closeMenu()" data-es="El arte" data-en="The art">El arte</a>
+  <a href="#portafolio" onclick="closeMenu()" data-es="Trabajos" data-en="Works">Trabajos</a>
+  <a href="#servicios" onclick="closeMenu()" data-es="Servicios" data-en="Services">Servicios</a>
+  <a href="#reservar" onclick="closeMenu()" data-es="Reservas" data-en="Book">Reservas</a>
+  <a href="#contacto" onclick="closeMenu()" data-es="Contacto" data-en="Contact">Contacto</a>
+  <div class="lang-btn" style="margin-top:1.5rem;">
+    <button onclick="setLang('es');closeMenu()" id="mob-btn-es" class="active">ES</button>
+    <button onclick="setLang('en');closeMenu()" id="mob-btn-en">EN</button>
+  </div>
+</div>
 
 <!-- HERO -->
 <section id="home">
@@ -591,7 +660,21 @@
     });
     document.getElementById('btn-es').classList.toggle('active', lang === 'es');
     document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('mob-btn-es').classList.toggle('active', lang === 'es');
+    document.getElementById('mob-btn-en').classList.toggle('active', lang === 'en');
     document.documentElement.lang = lang;
+  }
+  function toggleMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const btn = document.getElementById('hamburger');
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
+    document.body.style.overflow = menu.classList.contains('open') ? 'hidden' : '';
+  }
+  function closeMenu() {
+    document.getElementById('mobile-menu').classList.remove('open');
+    document.getElementById('hamburger').classList.remove('open');
+    document.body.style.overflow = '';
   }
 </script>
 <canvas id="starsCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.75;"></canvas>
@@ -722,19 +805,15 @@
 (function() {
   const dpr = window.devicePixelRatio || 1;
   const overlay = document.createElement('canvas');
-  const heroSection = document.getElementById('home');
-  overlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;';
-  heroSection.style.position = 'relative';
-  heroSection.appendChild(overlay);
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;';
+  document.body.appendChild(overlay);
   const ctx = overlay.getContext('2d');
 
   function resize() {
-    const w = heroSection.offsetWidth;
-    const h = heroSection.offsetHeight;
-    overlay.width = Math.round(w * dpr);
-    overlay.height = Math.round(h * dpr);
-    overlay.style.width = w + 'px';
-    overlay.style.height = h + 'px';
+    overlay.width = Math.round(window.innerWidth * dpr);
+    overlay.height = Math.round(window.innerHeight * dpr);
+    overlay.style.width = window.innerWidth + 'px';
+    overlay.style.height = window.innerHeight + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   resize();
@@ -757,11 +836,9 @@
   }
 
   function findFreeSpot() {
-    const hw = heroSection.offsetWidth;
-    const hh = heroSection.offsetHeight;
-    const zone = hh * 0.85;
+    const zone = window.innerHeight * 0.85;
     for (let attempt = 0; attempt < 30; attempt++) {
-      const x = Math.random() * (hw - 100) + 50;
+      const x = Math.random() * (window.innerWidth - 100) + 50;
       const y = Math.random() * (zone - 120) + 100;
       if (!isTooClose(x, y)) return { x, y };
     }
@@ -794,9 +871,7 @@
   setInterval(() => { if (bflies.length < 10) spawn(); }, 3000);
 
   function draw() {
-    const hw = heroSection.offsetWidth;
-    const hh = heroSection.offsetHeight;
-    ctx.clearRect(0, 0, hw, hh);
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
     bflies.forEach((b, i) => {
       b.flap += b.flapS;
@@ -821,11 +896,12 @@
       b.vx *= 0.97;
       b.vy *= 0.97;
 
-      // Stay within hero section
+      // Stay in top zone
+      const zone = window.innerHeight * 0.85;
       if (b.y < 80) b.vy = Math.abs(b.vy);
-      if (b.y > hh * 0.85) b.vy = -Math.abs(b.vy);
-      if (b.x < -30) b.x = hw + 30;
-      if (b.x > hw + 30) b.x = -30;
+      if (b.y > window.innerHeight * 0.85) b.vy = -Math.abs(b.vy);
+      if (b.x < -30) b.x = window.innerWidth + 30;
+      if (b.x > window.innerWidth + 30) b.x = -30;
 
       if (b.fadeIn) {
         b.alpha = Math.min(b.alpha + 0.01, b.maxAlpha);
