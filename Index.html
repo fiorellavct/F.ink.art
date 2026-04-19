@@ -722,15 +722,19 @@
 (function() {
   const dpr = window.devicePixelRatio || 1;
   const overlay = document.createElement('canvas');
-  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;';
-  document.body.appendChild(overlay);
+  const heroSection = document.getElementById('home');
+  overlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;';
+  heroSection.style.position = 'relative';
+  heroSection.appendChild(overlay);
   const ctx = overlay.getContext('2d');
 
   function resize() {
-    overlay.width = Math.round(window.innerWidth * dpr);
-    overlay.height = Math.round(window.innerHeight * dpr);
-    overlay.style.width = window.innerWidth + 'px';
-    overlay.style.height = window.innerHeight + 'px';
+    const w = heroSection.offsetWidth;
+    const h = heroSection.offsetHeight;
+    overlay.width = Math.round(w * dpr);
+    overlay.height = Math.round(h * dpr);
+    overlay.style.width = w + 'px';
+    overlay.style.height = h + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   resize();
@@ -753,9 +757,11 @@
   }
 
   function findFreeSpot() {
-    const zone = window.innerHeight * 0.85;
+    const hw = heroSection.offsetWidth;
+    const hh = heroSection.offsetHeight;
+    const zone = hh * 0.85;
     for (let attempt = 0; attempt < 30; attempt++) {
-      const x = Math.random() * (window.innerWidth - 100) + 50;
+      const x = Math.random() * (hw - 100) + 50;
       const y = Math.random() * (zone - 120) + 100;
       if (!isTooClose(x, y)) return { x, y };
     }
@@ -788,7 +794,9 @@
   setInterval(() => { if (bflies.length < 10) spawn(); }, 3000);
 
   function draw() {
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    const hw = heroSection.offsetWidth;
+    const hh = heroSection.offsetHeight;
+    ctx.clearRect(0, 0, hw, hh);
 
     bflies.forEach((b, i) => {
       b.flap += b.flapS;
@@ -813,12 +821,11 @@
       b.vx *= 0.97;
       b.vy *= 0.97;
 
-      // Stay in top zone
-      const zone = window.innerHeight * 0.85;
+      // Stay within hero section
       if (b.y < 80) b.vy = Math.abs(b.vy);
-      if (b.y > window.innerHeight * 0.85) b.vy = -Math.abs(b.vy);
-      if (b.x < -30) b.x = window.innerWidth + 30;
-      if (b.x > window.innerWidth + 30) b.x = -30;
+      if (b.y > hh * 0.85) b.vy = -Math.abs(b.vy);
+      if (b.x < -30) b.x = hw + 30;
+      if (b.x > hw + 30) b.x = -30;
 
       if (b.fadeIn) {
         b.alpha = Math.min(b.alpha + 0.01, b.maxAlpha);
